@@ -134,18 +134,18 @@ public class PackagesView extends Div implements BeforeEnterObserver {
     public void beforeEnter(BeforeEnterEvent event) {
         Optional<Long> packageModelId = event.getRouteParameters().get(PACKAGEMODEL_ID).map(Long::parseLong);
         if (packageModelId.isPresent()) {
-            Optional<PackageModel> packageModelFromBackend = packageModelService.get(packageModelId.get());
-            if (packageModelFromBackend.isPresent()) {
-                populateForm(packageModelFromBackend.get());
-            } else {
-                Notification.show(
-                        String.format("The requested packageModel was not found, ID = %s", packageModelId.get()), 3000,
-                        Notification.Position.BOTTOM_START);
-                // when a row is selected but the data is no longer available,
-                // refresh grid
-                refreshGrid();
-                event.forwardTo(PackagesView.class);
-            }
+            //Optional<PackageModel> packageModelFromBackend = packageModelService.get(packageModelId.get());
+//            if (packageModelFromBackend.isPresent()) {
+//                populateForm(packageModelFromBackend.get());
+//            } else {
+//                Notification.show(
+//                        String.format("The requested packageModel was not found, ID = %s", packageModelId.get()), 3000,
+//                        Notification.Position.BOTTOM_START);
+//                // when a row is selected but the data is no longer available,
+//                // refresh grid
+//                refreshGrid();
+//                event.forwardTo(PackagesView.class);
+//            }
         }
     }
 
