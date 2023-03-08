@@ -70,9 +70,9 @@ public class ClientView extends Div implements BeforeEnterObserver {
         grid.addColumn("address").setAutoWidth(true);
         grid.addColumn("phone").setAutoWidth(true);
         grid.addColumn("email").setAutoWidth(true);
-        grid.setItems(query -> clientModelService.list(
-                PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
-                .stream());
+//        grid.setItems(query -> clientModelService.list(
+//                PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
+//                .stream());
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
 
         // when a row is selected or deselected, populate form
@@ -149,7 +149,7 @@ public class ClientView extends Div implements BeforeEnterObserver {
         editorLayoutDiv.add(editorDiv);
 
         FormLayout formLayout = new FormLayout();
-        clientID = new TextField("Client ID");
+        clientID = new TextField("Codigo de cliente");
         name = new TextField("Name");
         address = new TextField("Address");
         phone = new TextField("Phone");
