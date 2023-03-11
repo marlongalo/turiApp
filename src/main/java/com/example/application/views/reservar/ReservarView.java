@@ -32,6 +32,8 @@ import com.vaadin.flow.router.RouteAlias;
 public class ReservarView extends Div {
 
 	private SelectPackageField selectPackageField = new SelectPackageField("Elige tu paquete");
+	private ClientesCombo clienteField = new ClientesCombo("Clientes");
+	
 	private DatePicker dateIn = new DatePicker("Fecha de inicio");
 	private DatePicker dateOut = new DatePicker("Fecha de fin");
 	
@@ -78,13 +80,14 @@ public class ReservarView extends Div {
     private Component createFormLayout() {
         FormLayout formLayout = new FormLayout();
         //email.setErrorMessage("Please enter a valid email address");
-        formLayout.add(selectPackageField, dividerHr, dateIn, dateOut, dividerHr, price); // Include the field you will need.
+        formLayout.add(selectPackageField, dividerHr, clienteField, dividerHr, dateIn, dateOut, dividerHr, price); // Include the field you will need.
         formLayout.setResponsiveSteps(
                 // Use one column by default
                 new ResponsiveStep("0", 1),
                 // Use two columns, if layout's width exceeds 500px
                 new ResponsiveStep("500px", 2));
         formLayout.setColspan(selectPackageField, 2);
+        formLayout.setColspan(clienteField, 2);
         formLayout.setColspan(dividerHr, 2);
         return formLayout;
     }
@@ -97,48 +100,7 @@ public class ReservarView extends Div {
         buttonLayout.add(cancel);
         return buttonLayout;
     }
-//
-//    private static class PhoneNumberField extends CustomField<String> {
-//        private ComboBox<String> countryCode = new ComboBox<>();
-//        private TextField number = new TextField();
-//
-//        public PhoneNumberField(String label) {
-//            setLabel(label);
-//            countryCode.setWidth("120px");
-//            countryCode.setPlaceholder("Country");
-//            countryCode.setAllowedCharPattern("[\\+\\d]");
-//            countryCode.setItems("+354", "+91", "+62", "+98", "+964", "+353", "+44", "+972", "+39", "+225");
-//            countryCode.addCustomValueSetListener(e -> countryCode.setValue(e.getDetail()));
-//            number.setAllowedCharPattern("\\d");
-//            HorizontalLayout layout = new HorizontalLayout(countryCode, number);
-//            layout.setFlexGrow(1.0, number);
-//            add(layout);
-//        }
-//
-//        @Override
-//        protected String generateModelValue() {
-//            if (countryCode.getValue() != null && number.getValue() != null) {
-//                String s = countryCode.getValue() + " " + number.getValue();
-//                return s;
-//            }
-//            return "";
-//        }
-//
-//        @Override
-//        protected void setPresentationValue(String phoneNumber) {
-//            String[] parts = phoneNumber != null ? phoneNumber.split(" ", 2) : new String[0];
-//            if (parts.length == 1) {
-//                countryCode.clear();
-//                number.setValue(parts[0]);
-//            } else if (parts.length == 2) {
-//                countryCode.setValue(parts[0]);
-//                number.setValue(parts[1]);
-//            } else {
-//                countryCode.clear();
-//                number.clear();
-//            }
-//        }
-//    }
+    
     
     private static class SelectPackageField extends CustomField<String> {
         private ComboBox<String> packagefield = new ComboBox<>();
@@ -179,4 +141,42 @@ public class ReservarView extends Div {
         }
     }
 
+    private static class ClientesCombo extends CustomField<String> {
+        private ComboBox<String> reservasField = new ComboBox<>();
+
+        public ClientesCombo(String label) {
+            setLabel(label);
+            reservasField.setWidthFull();
+            reservasField.setPlaceholder("Clientes");
+            reservasField.setAllowedCharPattern("[\\+\\d]");
+            reservasField.setItems("Cliente #1", "Cliente #2", "Clientes #3");
+            reservasField.addCustomValueSetListener(e -> reservasField.setValue(e.getDetail()));
+            HorizontalLayout layout = new HorizontalLayout(reservasField);
+            add(layout);
+        }
+
+        @Override
+        protected String generateModelValue() {
+            if (reservasField.getValue() != null ) {
+                String s = reservasField.getValue();
+                return s;
+            }
+            return "";
+        }
+
+        @Override
+        protected void setPresentationValue(String phoneNumber) {
+            String[] parts = phoneNumber != null ? phoneNumber.split(" ", 2) : new String[0];
+            if (parts.length == 1) {
+            	reservasField.clear();
+            	
+            } else if (parts.length == 2) {
+            	reservasField.setValue(parts[0]);
+            	
+            } else {
+            	reservasField.clear();
+            	
+            }
+        }
+    }
 }

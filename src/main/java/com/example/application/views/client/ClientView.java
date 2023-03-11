@@ -65,17 +65,17 @@ public class ClientView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
-        grid.addColumn("clientID").setAutoWidth(true);
-        grid.addColumn("name").setAutoWidth(true);
-        grid.addColumn("address").setAutoWidth(true);
-        grid.addColumn("phone").setAutoWidth(true);
-        grid.addColumn("email").setAutoWidth(true);
+        grid.addColumn("clientID").setAutoWidth(true).setHeader("ID");
+        grid.addColumn("name").setAutoWidth(true).setHeader("Nombre del cliente") ;
+        grid.addColumn("address").setAutoWidth(true).setHeader("Dirección") ;
+        grid.addColumn("phone").setAutoWidth(true).setHeader("Teléfono");
+        grid.addColumn("email").setAutoWidth(true).setHeader("Correo electrónico");
 //        grid.setItems(query -> clientModelService.list(
 //                PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
 //                .stream());
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
 
-        // when a row is selected or deselected, populate form
+
         grid.asSingleSelect().addValueChangeListener(event -> {
             if (event.getValue() != null) {
                 UI.getCurrent().navigate(String.format(CLIENTMODEL_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));

@@ -49,14 +49,10 @@ public class PackagesView extends Div implements BeforeEnterObserver {
     private final Button cancel = new Button("Cancel");
     private final Button save = new Button("Save");
 
-    private final BeanValidationBinder<PackageModel> binder;
-
     private PackageModel packageModel;
 
-    private final PackageModelService packageModelService;
-
-    public PackagesView(PackageModelService packageModelService) {
-        this.packageModelService = packageModelService;
+    public PackagesView() {
+    	
         addClassNames("packages-view");
 
         // Create UI
@@ -68,17 +64,15 @@ public class PackagesView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
-        grid.addColumn("packageID").setAutoWidth(true);
-        grid.addColumn("image").setAutoWidth(true);
-        grid.addColumn("namePackage").setAutoWidth(true);
-        grid.addColumn("destiny").setAutoWidth(true);
-        grid.addColumn("duration").setAutoWidth(true);
-        grid.addColumn("hotel").setAutoWidth(true);
-        grid.addColumn("activities").setAutoWidth(true);
-        grid.addColumn("price").setAutoWidth(true);
-        grid.setItems(query -> packageModelService.list(
-                PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
-                .stream());
+        grid.addColumn("packageID").setAutoWidth(true).setHeader("ID");
+        grid.addColumn("image").setAutoWidth(true).setHeader("Imagen") ;
+        grid.addColumn("namePackage").setAutoWidth(true).setHeader("Nombre");
+        grid.addColumn("destiny").setAutoWidth(true).setHeader("Destino");
+        grid.addColumn("duration").setAutoWidth(true).setHeader("Duración");
+        grid.addColumn("hotel").setAutoWidth(true).setHeader("Hotel");
+        grid.addColumn("activities").setAutoWidth(true).setHeader("Actividades");
+        grid.addColumn("price").setAutoWidth(true).setHeader("Precio");
+
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
 
         // when a row is selected or deselected, populate form
@@ -91,18 +85,6 @@ public class PackagesView extends Div implements BeforeEnterObserver {
             }
         });
 
-        // Configure Form
-        binder = new BeanValidationBinder<>(PackageModel.class);
-
-        // Bind fields. This is where you'd define e.g. validation rules
-        binder.forField(packageID).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
-                .bind("packageID");
-        binder.forField(duration).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
-                .bind("duration");
-        binder.forField(price).withConverter(new StringToIntegerConverter("Only numbers are allowed")).bind("price");
-
-        binder.bindInstanceFields(this);
-
         cancel.addClickListener(e -> {
             clearForm();
             refreshGrid();
@@ -113,8 +95,7 @@ public class PackagesView extends Div implements BeforeEnterObserver {
                 if (this.packageModel == null) {
                     this.packageModel = new PackageModel();
                 }
-                binder.writeBean(this.packageModel);
-                packageModelService.update(this.packageModel);
+                
                 clearForm();
                 refreshGrid();
                 Notification.show("Data updated");
@@ -124,9 +105,7 @@ public class PackagesView extends Div implements BeforeEnterObserver {
                         "Error updating the data. Somebody else has updated the record while you were making changes.");
                 n.setPosition(Position.MIDDLE);
                 n.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            } catch (ValidationException validationException) {
-                Notification.show("Failed to update the data. Check again that all values are valid");
-            }
+            } 
         });
     }
 
@@ -201,7 +180,6 @@ public class PackagesView extends Div implements BeforeEnterObserver {
 
     private void populateForm(PackageModel value) {
         this.packageModel = value;
-        binder.readBean(this.packageModel);
 
     }
 }
