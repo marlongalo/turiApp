@@ -1,7 +1,8 @@
 package com.example.application.views.packages;
 
 import com.example.application.data.entity.PackageModel;
-import com.example.application.data.service.PackageModelService;
+import com.example.application.data.entity.PaqueteResponse;
+import com.example.application.data.service.DatabaseServiceImplement;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -24,6 +25,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
+
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -50,10 +53,14 @@ public class PackagesView extends Div implements BeforeEnterObserver {
     private final Button save = new Button("Save");
 
     private PackageModel packageModel;
+    
+    private DatabaseServiceImplement db;
 
     public PackagesView() {
     	
         addClassNames("packages-view");
+        
+        db = DatabaseServiceImplement.getInstance();
 
         // Create UI
         SplitLayout splitLayout = new SplitLayout();
@@ -65,25 +72,39 @@ public class PackagesView extends Div implements BeforeEnterObserver {
 
         // Configure Grid
         grid.addColumn("packageID").setAutoWidth(true).setHeader("ID");
-        grid.addColumn("image").setAutoWidth(true).setHeader("Imagen") ;
         grid.addColumn("namePackage").setAutoWidth(true).setHeader("Nombre");
         grid.addColumn("destiny").setAutoWidth(true).setHeader("Destino");
         grid.addColumn("duration").setAutoWidth(true).setHeader("Duración");
         grid.addColumn("hotel").setAutoWidth(true).setHeader("Hotel");
         grid.addColumn("activities").setAutoWidth(true).setHeader("Actividades");
         grid.addColumn("price").setAutoWidth(true).setHeader("Precio");
+        grid.addColumn("image").setAutoWidth(true).setHeader("Imagen") ;
 
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
 
         // when a row is selected or deselected, populate form
         grid.asSingleSelect().addValueChangeListener(event -> {
-            if (event.getValue() != null) {
-                UI.getCurrent().navigate(String.format(PACKAGEMODEL_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));
-            } else {
-                clearForm();
-                UI.getCurrent().navigate(PackagesView.class);
-            }
+        	
+//            if (event.getValue() != null) {
+//                UI.getCurrent().navigate(String.format(PACKAGEMODEL_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));
+//            } else {
+//                clearForm();
+//                UI.getCurrent().navigate(PackagesView.class);
+//            }
+            
         });
+        
+        try {
+        	PaqueteResponse paquetes = db.listarPaquetes();	
+        	
+        	Collection<PackageModel> collectionPaquetes = paquetes.getPaquetes();
+        	grid.setItems(collectionPaquetes);
+        	
+		} catch (Exception e) {
+			// TODO: handle exception
+			Notification.show("No se puedieron cargar los paquetes.");
+		}
+        
 
         cancel.addClickListener(e -> {
             clearForm();

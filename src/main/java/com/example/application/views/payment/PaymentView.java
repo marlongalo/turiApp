@@ -1,7 +1,6 @@
 package com.example.application.views.payment;
 
 import com.example.application.data.entity.SampleAddress;
-import com.example.application.data.service.SampleAddressService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -35,7 +34,7 @@ public class PaymentView extends Div {
 
     private Binder<SampleAddress> binder = new Binder<>(SampleAddress.class);
 
-    public PaymentView(SampleAddressService addressService) {
+    public PaymentView() {
     	
     	dialog.setHeaderTitle(String.format("Confirmación"));
         dialog.add("¿Está seguro de pagar esta reserva a nombre de este cliente?");

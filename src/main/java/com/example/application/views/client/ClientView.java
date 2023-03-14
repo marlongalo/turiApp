@@ -1,7 +1,10 @@
 package com.example.application.views.client;
 
 import com.example.application.data.entity.ClientModel;
-import com.example.application.data.service.ClientModelService;
+import com.example.application.data.entity.ClientResponse;
+import com.example.application.data.entity.PackageModel;
+import com.example.application.data.entity.PaqueteResponse;
+import com.example.application.data.service.DatabaseServiceImplement;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -24,6 +27,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
+
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -46,15 +51,16 @@ public class ClientView extends Div implements BeforeEnterObserver {
     private final Button cancel = new Button("Cancel");
     private final Button save = new Button("Save");
 
-    private final BeanValidationBinder<ClientModel> binder;
-
     private ClientModel clientModel;
+    
+    private DatabaseServiceImplement db;
 
-    private final ClientModelService clientModelService;
 
-    public ClientView(ClientModelService clientModelService) {
-        this.clientModelService = clientModelService;
+    public ClientView() {
+        
         addClassNames("client-view");
+        
+        db = DatabaseServiceImplement.getInstance();
 
         // Create UI
         SplitLayout splitLayout = new SplitLayout();
@@ -77,22 +83,25 @@ public class ClientView extends Div implements BeforeEnterObserver {
 
 
         grid.asSingleSelect().addValueChangeListener(event -> {
-            if (event.getValue() != null) {
-                UI.getCurrent().navigate(String.format(CLIENTMODEL_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));
-            } else {
-                clearForm();
-                UI.getCurrent().navigate(ClientView.class);
-            }
+//            if (event.getValue() != null) {
+//                UI.getCurrent().navigate(String.format(CLIENTMODEL_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));
+//            } else {
+//                clearForm();
+//                UI.getCurrent().navigate(ClientView.class);
+//            }
         });
+        
+        try {
+        	ClientResponse clientes = db.listarClientes();	
+        	
+        	Collection<ClientModel> collectionPaquetes = clientes.getItems();
+        	grid.setItems(collectionPaquetes);
+        	
+		} catch (Exception e) {
+			// TODO: handle exception
+			Notification.show("No se puedieron cargar los paquetes.");
+		}
 
-        // Configure Form
-        binder = new BeanValidationBinder<>(ClientModel.class);
-
-        // Bind fields. This is where you'd define e.g. validation rules
-        binder.forField(clientID).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
-                .bind("clientID");
-
-        binder.bindInstanceFields(this);
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -104,8 +113,8 @@ public class ClientView extends Div implements BeforeEnterObserver {
                 if (this.clientModel == null) {
                     this.clientModel = new ClientModel();
                 }
-                binder.writeBean(this.clientModel);
-                clientModelService.update(this.clientModel);
+                
+                
                 clearForm();
                 refreshGrid();
                 Notification.show("Data updated");
@@ -115,9 +124,7 @@ public class ClientView extends Div implements BeforeEnterObserver {
                         "Error updating the data. Somebody else has updated the record while you were making changes.");
                 n.setPosition(Position.MIDDLE);
                 n.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            } catch (ValidationException validationException) {
-                Notification.show("Failed to update the data. Check again that all values are valid");
-            }
+            } 
         });
     }
 
@@ -125,18 +132,7 @@ public class ClientView extends Div implements BeforeEnterObserver {
     public void beforeEnter(BeforeEnterEvent event) {
         Optional<Long> clientModelId = event.getRouteParameters().get(CLIENTMODEL_ID).map(Long::parseLong);
         if (clientModelId.isPresent()) {
-            Optional<ClientModel> clientModelFromBackend = clientModelService.get(clientModelId.get());
-            if (clientModelFromBackend.isPresent()) {
-                populateForm(clientModelFromBackend.get());
-            } else {
-                Notification.show(
-                        String.format("The requested clientModel was not found, ID = %s", clientModelId.get()), 3000,
-                        Notification.Position.BOTTOM_START);
-                // when a row is selected but the data is no longer available,
-                // refresh grid
-                refreshGrid();
-                event.forwardTo(ClientView.class);
-            }
+            
         }
     }
 
@@ -189,7 +185,6 @@ public class ClientView extends Div implements BeforeEnterObserver {
 
     private void populateForm(ClientModel value) {
         this.clientModel = value;
-        binder.readBean(this.clientModel);
 
     }
 }

@@ -1,7 +1,6 @@
 package com.example.application.views.reservar;
 
 import com.example.application.data.entity.SamplePerson;
-import com.example.application.data.service.SamplePersonService;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -51,7 +50,7 @@ public class ReservarView extends Div {
 
     private Binder<SamplePerson> binder = new Binder<>(SamplePerson.class);
 
-    public ReservarView(SamplePersonService personService) {
+    public ReservarView() {
         addClassName("reservar-view");
 
         add(createTitle());
@@ -63,7 +62,7 @@ public class ReservarView extends Div {
 
         cancel.addClickListener(e -> clearForm());
         save.addClickListener(e -> {
-            personService.update(binder.getBean());
+            
             Notification.show(binder.getBean().getClass().getSimpleName() + " details stored.");
             clearForm();
         });

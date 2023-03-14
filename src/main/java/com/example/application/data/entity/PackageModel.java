@@ -5,9 +5,9 @@ import javax.persistence.Entity;
 @Entity
 public class PackageModel extends AbstractEntity {
 
-    private Integer packageID;
+    private Integer packageid;
     private String image;
-    private String namePackage;
+    private String namepackage;
     private String destiny;
     private Integer duration;
     private String hotel;
@@ -15,10 +15,10 @@ public class PackageModel extends AbstractEntity {
     private Integer price;
 
     public Integer getPackageID() {
-        return packageID;
+        return packageid;
     }
     public void setPackageID(Integer packageID) {
-        this.packageID = packageID;
+        this.packageid = packageID;
     }
     public String getImage() {
         return image;
@@ -27,10 +27,10 @@ public class PackageModel extends AbstractEntity {
         this.image = image;
     }
     public String getNamePackage() {
-        return namePackage;
+        return namepackage;
     }
     public void setNamePackage(String namePackage) {
-        this.namePackage = namePackage;
+        this.namepackage = namePackage;
     }
     public String getDestiny() {
         return destiny;
