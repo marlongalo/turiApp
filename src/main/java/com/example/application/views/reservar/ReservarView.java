@@ -1,10 +1,14 @@
 package com.example.application.views.reservar;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 
 import com.example.application.data.entity.ClientModel;
 import com.example.application.data.entity.ClientResponse;
@@ -47,6 +51,9 @@ public class ReservarView extends Div {
 	private ComboBox<String> clientCombo = new ComboBox<>();
 	Collection<ClientModel> collectionClientes;
 	
+	private PackageModel packageSelected;
+	private ClientModel clienteSelected;
+	
 	private DatePicker dateIn = new DatePicker("Fecha de inicio");
 	private DatePicker dateOut = new DatePicker("Fecha de fin");
 	private TextField price = new TextField("Precio");
@@ -54,8 +61,9 @@ public class ReservarView extends Div {
     
     private Hr dividerHr = new Hr();
 
-    private Button cancel = new Button("Cancel");
-    private Button save = new Button("Save");
+    private Button cancel = new Button("Cancelar");
+    private Button save = new Button("Guardar");
+    private Button calculate = new Button("Calcular");
     
     private DatabaseServiceImplement db;
     
@@ -66,6 +74,7 @@ public class ReservarView extends Div {
     public ReservarView() {
         addClassName("reservar-view");
         db = DatabaseServiceImplement.getInstance();
+        ZoneId defaultZoneId = ZoneId.systemDefault();
         
         add(createTitle());
         
@@ -105,6 +114,44 @@ public class ReservarView extends Div {
             clearForm();
         });
         
+        
+        calculate.addClickListener(e -> {
+        	String packageNameString = packageCombo.getValue();
+        	
+        	collectionPaquetes.forEach(paquete -> {
+        		if( packageNameString == paquete.getNamePackage() ) {
+        			packageSelected = paquete;
+        		}
+        	});
+        	
+        	
+        	String clienteString = clientCombo.getValue();
+        	
+        	collectionClientes.forEach(cliente -> {
+        		if( clienteString == cliente.getName() ) {
+        			clienteSelected = cliente;
+        		}
+        	});
+        	
+        	LocalDate rangeIn = dateIn.getValue();
+        	LocalDate rangeOut = dateOut.getValue();
+        	Date rangeInDate = Date.from(rangeIn.atStartOfDay(defaultZoneId).toInstant());
+        	Date rangeOutDate = Date.from(rangeOut.atStartOfDay(defaultZoneId).toInstant());
+        	
+        	
+        	long range = rangeOutDate.getTime() - rangeInDate.getTime();
+        	
+        	TimeUnit time = TimeUnit.DAYS;
+        	long difference = time.convert(range, TimeUnit.MILLISECONDS);
+        	
+        	Notification.show(difference + "");
+        	int totalPrice = (int) (difference * packageSelected.getPrice());
+        	
+        	price.setValue(totalPrice + "");
+        	
+        	
+        });
+        
     }
 
     private void clearForm() {
@@ -140,7 +187,7 @@ public class ReservarView extends Div {
     	
 
     	//email.setErrorMessage("Please enter a valid email address");
-        formLayout.add(packageCombo, dividerHr, clientCombo, dividerHr, dateIn, dateOut, dividerHr, price); // Include the field you will need.
+        formLayout.add(packageCombo, dividerHr, clientCombo, dividerHr, dateIn, dateOut, dividerHr, calculate, price); // Include the field you will need.
         formLayout.setResponsiveSteps(
                 // Use one column by default
                 new ResponsiveStep("0", 1),
