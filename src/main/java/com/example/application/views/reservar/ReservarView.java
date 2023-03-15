@@ -1,7 +1,17 @@
 package com.example.application.views.reservar;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
+import com.example.application.data.entity.ClientModel;
+import com.example.application.data.entity.ClientResponse;
+import com.example.application.data.entity.PackageModel;
+import com.example.application.data.entity.PaqueteResponse;
 import com.example.application.data.entity.SamplePerson;
-import com.example.application.data.service.SamplePersonService;
+import com.example.application.data.service.DatabaseServiceImplement;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -11,8 +21,10 @@ import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.formlayout.FormLayout;
+import com.vaadin.flow.component.formlayout.FormLayout.ResponsiveStep;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -29,49 +41,117 @@ import com.vaadin.flow.router.RouteAlias;
 @Uses(Icon.class)
 public class ReservarView extends Div {
 
-    private TextField firstName = new TextField("First name");
-    private TextField lastName = new TextField("Last name");
-    private EmailField email = new EmailField("Email address");
-    private DatePicker dateOfBirth = new DatePicker("Birthday");
-    private PhoneNumberField phone = new PhoneNumberField("Phone number");
-    private TextField occupation = new TextField("Occupation");
+	private ComboBox<String> packageCombo = new ComboBox<>();
+	Collection<PackageModel> collectionPaquetes;
+	
+	private ComboBox<String> clientCombo = new ComboBox<>();
+	Collection<ClientModel> collectionClientes;
+	
+	private DatePicker dateIn = new DatePicker("Fecha de inicio");
+	private DatePicker dateOut = new DatePicker("Fecha de fin");
+	private TextField price = new TextField("Precio");
+	
+    
+    private Hr dividerHr = new Hr();
 
     private Button cancel = new Button("Cancel");
     private Button save = new Button("Save");
+    
+    private DatabaseServiceImplement db;
+    
+    private List<String> itemsPaquetes = new ArrayList<>();
+    private List<String> itemsClientes = new ArrayList<>();
+    
 
-    private Binder<SamplePerson> binder = new Binder<>(SamplePerson.class);
-
-    public ReservarView(SamplePersonService personService) {
+    public ReservarView() {
         addClassName("reservar-view");
-
+        db = DatabaseServiceImplement.getInstance();
+        
         add(createTitle());
+        
+        try {
+        	PaqueteResponse paquetes = db.listarPaquetes();
+        	collectionPaquetes = paquetes.getPaquetes();
+        	
+        	collectionPaquetes.forEach( (paquete) -> {
+        		itemsPaquetes.add(paquete.getNamePackage());
+        	});
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			Notification.show("No se pudieron cargar los paquetes.");
+		}
+        
+        
+        try {
+        	ClientResponse paquetes = db.listarClientes();
+        	collectionClientes = paquetes.getItems();
+        	
+        	collectionClientes.forEach( (paquete) -> {
+        		itemsClientes.add(paquete.getName());
+        	});
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			Notification.show("No se pudieron cargar los clientes.");
+		}
+        
+        
         add(createFormLayout());
         add(createButtonLayout());
 
-        binder.bindInstanceFields(this);
-        clearForm();
-
         cancel.addClickListener(e -> clearForm());
         save.addClickListener(e -> {
-            personService.update(binder.getBean());
-            Notification.show(binder.getBean().getClass().getSimpleName() + " details stored.");
             clearForm();
         });
+        
     }
 
     private void clearForm() {
-        binder.setBean(new SamplePerson());
+        //binder.setBean(new SamplePerson());
     }
 
     private Component createTitle() {
-        return new H3("Personal information");
+        return new H3("Haz la reserva de paquete que más te guste");
     }
 
     private Component createFormLayout() {
-        FormLayout formLayout = new FormLayout();
-        email.setErrorMessage("Please enter a valid email address");
-        formLayout.add(firstName, lastName, dateOfBirth, phone, email, occupation);
-        return formLayout;
+    	
+    	FormLayout formLayout = new FormLayout();
+    	
+    	packageCombo.setLabel("Paquetes");
+    	packageCombo.setWidthFull();
+    	packageCombo.setPlaceholder("Paquete");
+    	packageCombo.setAllowedCharPattern("[\\+\\d]");
+    	packageCombo.setItems(itemsPaquetes);
+    	packageCombo.addCustomValueSetListener(e -> {
+    		packageCombo.setValue(e.getDetail());
+    	});
+    	
+    	clientCombo.setLabel("Clientes");
+    	clientCombo.setWidthFull();
+    	clientCombo.setPlaceholder("Clientes");
+    	clientCombo.setAllowedCharPattern("[\\+\\d]");
+    	clientCombo.setItems(itemsClientes);
+    	clientCombo.addCustomValueSetListener(e -> {
+    		clientCombo.setValue(e.getDetail());
+    	});
+        
+    	
+
+    	//email.setErrorMessage("Please enter a valid email address");
+        formLayout.add(packageCombo, dividerHr, clientCombo, dividerHr, dateIn, dateOut, dividerHr, price); // Include the field you will need.
+        formLayout.setResponsiveSteps(
+                // Use one column by default
+                new ResponsiveStep("0", 1),
+                // Use two columns, if layout's width exceeds 500px
+                new ResponsiveStep("500px", 2));
+        
+        formLayout.setColspan(packageCombo, 2);
+        formLayout.setColspan(clientCombo, 2);
+        formLayout.setColspan(dividerHr, 2);
+    	
+    	return formLayout;
     }
 
     private Component createButtonLayout() {
@@ -82,47 +162,5 @@ public class ReservarView extends Div {
         buttonLayout.add(cancel);
         return buttonLayout;
     }
-
-    private static class PhoneNumberField extends CustomField<String> {
-        private ComboBox<String> countryCode = new ComboBox<>();
-        private TextField number = new TextField();
-
-        public PhoneNumberField(String label) {
-            setLabel(label);
-            countryCode.setWidth("120px");
-            countryCode.setPlaceholder("Country");
-            countryCode.setAllowedCharPattern("[\\+\\d]");
-            countryCode.setItems("+354", "+91", "+62", "+98", "+964", "+353", "+44", "+972", "+39", "+225");
-            countryCode.addCustomValueSetListener(e -> countryCode.setValue(e.getDetail()));
-            number.setAllowedCharPattern("\\d");
-            HorizontalLayout layout = new HorizontalLayout(countryCode, number);
-            layout.setFlexGrow(1.0, number);
-            add(layout);
-        }
-
-        @Override
-        protected String generateModelValue() {
-            if (countryCode.getValue() != null && number.getValue() != null) {
-                String s = countryCode.getValue() + " " + number.getValue();
-                return s;
-            }
-            return "";
-        }
-
-        @Override
-        protected void setPresentationValue(String phoneNumber) {
-            String[] parts = phoneNumber != null ? phoneNumber.split(" ", 2) : new String[0];
-            if (parts.length == 1) {
-                countryCode.clear();
-                number.setValue(parts[0]);
-            } else if (parts.length == 2) {
-                countryCode.setValue(parts[0]);
-                number.setValue(parts[1]);
-            } else {
-                countryCode.clear();
-                number.clear();
-            }
-        }
-    }
-
+    
 }

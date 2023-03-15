@@ -1,7 +1,8 @@
 package com.example.application.views.packages;
 
 import com.example.application.data.entity.PackageModel;
-import com.example.application.data.service.PackageModelService;
+import com.example.application.data.entity.PaqueteResponse;
+import com.example.application.data.service.DatabaseServiceImplement;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -24,6 +25,8 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.data.VaadinSpringDataHelpers;
+
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -49,15 +52,15 @@ public class PackagesView extends Div implements BeforeEnterObserver {
     private final Button cancel = new Button("Cancel");
     private final Button save = new Button("Save");
 
-    private final BeanValidationBinder<PackageModel> binder;
-
     private PackageModel packageModel;
+    
+    private DatabaseServiceImplement db;
 
-    private final PackageModelService packageModelService;
-
-    public PackagesView(PackageModelService packageModelService) {
-        this.packageModelService = packageModelService;
+    public PackagesView() {
+    	
         addClassNames("packages-view");
+        
+        db = DatabaseServiceImplement.getInstance();
 
         // Create UI
         SplitLayout splitLayout = new SplitLayout();
@@ -68,40 +71,40 @@ public class PackagesView extends Div implements BeforeEnterObserver {
         add(splitLayout);
 
         // Configure Grid
-        grid.addColumn("packageID").setAutoWidth(true);
-        grid.addColumn("image").setAutoWidth(true);
-        grid.addColumn("namePackage").setAutoWidth(true);
-        grid.addColumn("destiny").setAutoWidth(true);
-        grid.addColumn("duration").setAutoWidth(true);
-        grid.addColumn("hotel").setAutoWidth(true);
-        grid.addColumn("activities").setAutoWidth(true);
-        grid.addColumn("price").setAutoWidth(true);
-        grid.setItems(query -> packageModelService.list(
-                PageRequest.of(query.getPage(), query.getPageSize(), VaadinSpringDataHelpers.toSpringDataSort(query)))
-                .stream());
+        grid.addColumn("packageID").setAutoWidth(true).setHeader("ID");
+        grid.addColumn("namePackage").setAutoWidth(true).setHeader("Nombre");
+        grid.addColumn("destiny").setAutoWidth(true).setHeader("Destino");
+        grid.addColumn("duration").setAutoWidth(true).setHeader("Duración");
+        grid.addColumn("hotel").setAutoWidth(true).setHeader("Hotel");
+        grid.addColumn("activities").setAutoWidth(true).setHeader("Actividades");
+        grid.addColumn("price").setAutoWidth(true).setHeader("Precio");
+        grid.addColumn("image").setAutoWidth(true).setHeader("Imagen") ;
+
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
 
         // when a row is selected or deselected, populate form
         grid.asSingleSelect().addValueChangeListener(event -> {
-            if (event.getValue() != null) {
-                UI.getCurrent().navigate(String.format(PACKAGEMODEL_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));
-            } else {
-                clearForm();
-                UI.getCurrent().navigate(PackagesView.class);
-            }
+        	
+//            if (event.getValue() != null) {
+//                UI.getCurrent().navigate(String.format(PACKAGEMODEL_EDIT_ROUTE_TEMPLATE, event.getValue().getId()));
+//            } else {
+//                clearForm();
+//                UI.getCurrent().navigate(PackagesView.class);
+//            }
+            
         });
-
-        // Configure Form
-        binder = new BeanValidationBinder<>(PackageModel.class);
-
-        // Bind fields. This is where you'd define e.g. validation rules
-        binder.forField(packageID).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
-                .bind("packageID");
-        binder.forField(duration).withConverter(new StringToIntegerConverter("Only numbers are allowed"))
-                .bind("duration");
-        binder.forField(price).withConverter(new StringToIntegerConverter("Only numbers are allowed")).bind("price");
-
-        binder.bindInstanceFields(this);
+        
+        try {
+        	PaqueteResponse paquetes = db.listarPaquetes();	
+        	
+        	Collection<PackageModel> collectionPaquetes = paquetes.getPaquetes();
+        	grid.setItems(collectionPaquetes);
+        	
+		} catch (Exception e) {
+			// TODO: handle exception
+			Notification.show("No se puedieron cargar los paquetes.");
+		}
+        
 
         cancel.addClickListener(e -> {
             clearForm();
@@ -113,8 +116,7 @@ public class PackagesView extends Div implements BeforeEnterObserver {
                 if (this.packageModel == null) {
                     this.packageModel = new PackageModel();
                 }
-                binder.writeBean(this.packageModel);
-                packageModelService.update(this.packageModel);
+                
                 clearForm();
                 refreshGrid();
                 Notification.show("Data updated");
@@ -124,9 +126,7 @@ public class PackagesView extends Div implements BeforeEnterObserver {
                         "Error updating the data. Somebody else has updated the record while you were making changes.");
                 n.setPosition(Position.MIDDLE);
                 n.addThemeVariants(NotificationVariant.LUMO_ERROR);
-            } catch (ValidationException validationException) {
-                Notification.show("Failed to update the data. Check again that all values are valid");
-            }
+            } 
         });
     }
 
@@ -201,7 +201,6 @@ public class PackagesView extends Div implements BeforeEnterObserver {
 
     private void populateForm(PackageModel value) {
         this.packageModel = value;
-        binder.readBean(this.packageModel);
 
     }
 }

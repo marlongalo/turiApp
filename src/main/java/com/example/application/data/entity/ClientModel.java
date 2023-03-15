@@ -6,7 +6,7 @@ import javax.validation.constraints.Email;
 @Entity
 public class ClientModel extends AbstractEntity {
 
-    private Integer clientID;
+    private Integer clientid;
     private String name;
     private String address;
     private String phone;
@@ -14,10 +14,10 @@ public class ClientModel extends AbstractEntity {
     private String email;
 
     public Integer getClientID() {
-        return clientID;
+        return clientid;
     }
     public void setClientID(Integer clientID) {
-        this.clientID = clientID;
+        this.clientid = clientID;
     }
     public String getName() {
         return name;
