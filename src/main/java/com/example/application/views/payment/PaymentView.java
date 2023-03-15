@@ -3,15 +3,18 @@ package com.example.application.views.payment;
 import com.example.application.data.entity.SampleAddress;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -27,31 +30,33 @@ public class PaymentView extends Div {
 	
 	private DatePicker paymentDate = new DatePicker("Fecha");
 	
-	Dialog dialog = new Dialog();
 
     private Button cancel = new Button("Cancel");
     private Button save = new Button("Save");
-
-    private Binder<SampleAddress> binder = new Binder<>(SampleAddress.class);
+    
+    private Span status;
 
     public PaymentView() {
     	
-    	dialog.setHeaderTitle(String.format("Confirmación"));
-        dialog.add("¿Está seguro de pagar esta reserva a nombre de este cliente?");
-        dialog.add("Total a pagar: Lps: 5,000.00");
+    	status = new Span();
+        status.setVisible(false);
         
-        Button cancelButton = new Button("Cancel", (e) -> dialog.close());
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        dialog.getFooter().add(cancelButton);
-
-        Button payButton = new Button("Pagar", (e) -> dialog.close());
-        payButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
-        
-        cancelButton.getStyle().set("margin-right", "auto");
-        dialog.getFooter().add(payButton);
-
-        
+        ConfirmDialog dialog = new ConfirmDialog();
     	
+    	dialog.setHeader(String.format("Confirmación de pago"));
+        dialog.setText(new Html("<p>¿Está seguro que desea realizar el pago por la cantidad de "
+        		+ "<b>Lps. 5,000.00</b> por la compra del paquete?"));
+        
+        dialog.add("Este cobro se realizará al base a la tarifa de bancos internacionales.");
+        
+        dialog.setCancelable(true);
+        
+        dialog.addCancelListener(event -> dialogCancel("Canceled"));
+        
+        dialog.setConfirmText("Realizar el pago");
+        dialog.setConfirmButtonTheme("success");
+        dialog.addConfirmListener(event -> dialogPagar("Pagado"));
+        
     	
         addClassName("payment-view");
 
@@ -68,6 +73,16 @@ public class PaymentView extends Div {
         	dialog.open();
             clearForm();
         });
+    }
+    
+    private void dialogCancel(String value) {
+        // Cancelando
+        status.setVisible(true);
+    }
+    
+    private void dialogPagar(String value) {
+    	// TODO: Guardar en base de datos
+        status.setVisible(true);
     }
 
     private Component createTitle() {
@@ -94,7 +109,7 @@ public class PaymentView extends Div {
     }
 
     private void clearForm() {
-        this.binder.setBean(new SampleAddress());
+        
     }
     
     
