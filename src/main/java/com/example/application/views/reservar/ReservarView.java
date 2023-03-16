@@ -1,27 +1,26 @@
 package com.example.application.views.reservar;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Date;
 
 import com.example.application.data.entity.ClientModel;
 import com.example.application.data.entity.ClientResponse;
 import com.example.application.data.entity.PackageModel;
 import com.example.application.data.entity.PaqueteResponse;
-import com.example.application.data.entity.SamplePerson;
+import com.example.application.data.entity.ReservaModel;
 import com.example.application.data.service.DatabaseServiceImplement;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -32,9 +31,7 @@ import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
@@ -43,6 +40,7 @@ import com.vaadin.flow.router.RouteAlias;
 @Route(value = "reservar", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 @Uses(Icon.class)
+
 public class ReservarView extends Div {
 
 	private ComboBox<String> packageCombo = new ComboBox<>();
@@ -69,6 +67,9 @@ public class ReservarView extends Div {
     
     private List<String> itemsPaquetes = new ArrayList<>();
     private List<String> itemsClientes = new ArrayList<>();
+    
+    Date rangeInDate;
+    Date rangeOutDate;
     
 
     public ReservarView() {
@@ -109,9 +110,27 @@ public class ReservarView extends Div {
         add(createFormLayout());
         add(createButtonLayout());
 
-        cancel.addClickListener(e -> clearForm());
+        cancel.addClickListener(e -> gotToPay());
         save.addClickListener(e -> {
-            clearForm();
+        	
+        	ReservaModel nuevaReserva = new ReservaModel();
+        	
+        	nuevaReserva.setPackageid(packageSelected.getPackageID());
+        	nuevaReserva.setClienteid(clienteSelected.getClientID());
+        	nuevaReserva.setFechainicio(rangeInDate.toString());
+        	nuevaReserva.setFechafin(rangeOutDate.toString());
+        	nuevaReserva.setPrice(Integer.parseInt(price.getValue()));
+        	nuevaReserva.setPayed(0);
+        	
+        	try {
+				db.crearReserva(nuevaReserva);
+				Notification.show("Reserva guardada correctamente.");
+				gotToPay();
+			} catch (IOException e1) {
+				Notification.show("Algo salió mal durante el guardado.");
+				e1.printStackTrace();
+			}
+            
         });
         
         
@@ -135,8 +154,8 @@ public class ReservarView extends Div {
         	
         	LocalDate rangeIn = dateIn.getValue();
         	LocalDate rangeOut = dateOut.getValue();
-        	Date rangeInDate = Date.from(rangeIn.atStartOfDay(defaultZoneId).toInstant());
-        	Date rangeOutDate = Date.from(rangeOut.atStartOfDay(defaultZoneId).toInstant());
+        	rangeInDate = Date.from(rangeIn.atStartOfDay(defaultZoneId).toInstant());
+        	rangeOutDate = Date.from(rangeOut.atStartOfDay(defaultZoneId).toInstant());
         	
         	
         	long range = rangeOutDate.getTime() - rangeInDate.getTime();
@@ -149,13 +168,12 @@ public class ReservarView extends Div {
         	
         	price.setValue(totalPrice + "");
         	
-        	
         });
-        
     }
 
-    private void clearForm() {
+    private void gotToPay() {
         //binder.setBean(new SamplePerson());
+    	UI.getCurrent().navigate(String.format("payment"));
     }
 
     private Component createTitle() {

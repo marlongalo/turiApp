@@ -1,19 +1,30 @@
 package com.example.application.views.payment;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import com.example.application.data.entity.PaymentModel;
+import com.example.application.data.entity.ReservaModel;
+import com.example.application.data.entity.ReservasResponse;
+import com.example.application.data.service.DatabaseServiceImplement;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Html;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
-import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
@@ -21,51 +32,113 @@ import com.vaadin.flow.router.Route;
 @Route(value = "payment", layout = MainLayout.class)
 public class PaymentView extends Div {
 	
-	private ReservasCombo reservaSelectPackageField = new ReservasCombo("Reservas pendientes");
+	private ComboBox<String> reservasCombo = new ComboBox<>();
+	private List<String> itemsReservas = new ArrayList<>();
+	private Collection<ReservaModel> collectionReservas;
+	private ReservaModel reservaSelected;
+	private String price = "";
 	
 	private DatePicker paymentDate = new DatePicker("Fecha");
-	
+	private TextField cardNumber = new TextField("Número de tarjeta");
+	private TextField secretNumber = new TextField("Número secreto");
+	private TextField dateNumber = new TextField("Fecha de expiración");
 
     private Button cancel = new Button("Cancel");
-    private Button save = new Button("Save");
-    
+    private Button save = new Button("Save");    
     private Span status;
+    
+    
+    private DatabaseServiceImplement db;
+    
 
     public PaymentView() {
     	
     	status = new Span();
         status.setVisible(false);
+        db = DatabaseServiceImplement.getInstance();
         
-        ConfirmDialog dialog = new ConfirmDialog();
-    	
-    	dialog.setHeader(String.format("Confirmación de pago"));
-        dialog.setText(new Html("<p>¿Está seguro que desea realizar el pago por la cantidad de "
-        		+ "<b>Lps. 5,000.00</b> por la compra del paquete?"));
+        try {
+        	ReservasResponse reservas = db.listarReserva();
+        	collectionReservas = reservas.getItems();
+        	
+        	collectionReservas.forEach( (reserva) -> {
+        		itemsReservas.add("Reserva con ID #" + reserva.getReservaid());
+        	});
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			Notification.show("No se pudieron cargar los paquetes.");
+		}
         
-        dialog.add("Este cobro se realizará al base a la tarifa de bancos internacionales.");
-        
-        dialog.setCancelable(true);
-        
-        dialog.addCancelListener(event -> dialogCancel("Canceled"));
-        
-        dialog.setConfirmText("Realizar el pago");
-        dialog.setConfirmButtonTheme("success");
-        dialog.addConfirmListener(event -> dialogPagar("Pagado"));
-        
-    	
         addClassName("payment-view");
 
         add(createTitle());
         add(createFormLayout());
         add(createButtonLayout());
 
-        //binder.bindInstanceFields(this);
 
         clearForm();
 
         cancel.addClickListener(e -> clearForm());
         save.addClickListener(e -> {
-        	dialog.open();
+        	
+        	String reservaString = reservasCombo.getValue(); 
+        	String reservaID = reservaString.split("#")[1];
+        	
+        	collectionReservas.forEach( reserva -> {
+        		if (reserva.getReservaid() == Integer.parseInt(reservaID)) {
+        			price = reserva.getTotalprice().toString();
+        			reservaSelected = reserva;
+        			ConfirmDialog dialog = new ConfirmDialog();
+        	    	
+        	    	dialog.setHeader(String.format("Confirmación de pago"));
+        	        dialog.setText(new Html("<p>¿Está seguro que desea realizar el pago por la cantidad de "
+        	        		+ "<b>Lps. " + price + "</b> por la compra del paquete?"));
+        	        
+        	        dialog.add("Este cobro se realizará al base a la tarifa de bancos internacionales.");
+        	        
+        	        dialog.setCancelable(true);
+        	        
+        	        dialog.addCancelListener(event -> dialogCancel("Canceled"));
+        	        
+        	        dialog.setConfirmText("Realizar el pago");
+        	        dialog.setConfirmButtonTheme("success");
+        	        dialog.addConfirmListener(event -> {
+        	        	
+        	        	PaymentModel pago = new PaymentModel();
+        	        	
+        	        	pago.setReservaid(reservaSelected.getReservaid());
+        	        	pago.setCard(cardNumber.getValue());
+        	        	pago.setDatecard(dateNumber.getValue());
+        	        	pago.setSecretnumber(secretNumber.getValue());
+        	        	pago.setDatepayment(paymentDate.getValue().toString());
+        	        	pago.setPrice( Integer.parseInt(price) );
+        	        	
+        	        	try {
+							db.crearPayment(pago);
+							
+							reservaSelected.setPayed(1);
+							db.actualizarReserva(reservaSelected);
+							
+							
+							collectionReservas.remove(reserva);
+							
+							UI.getCurrent().navigate(String.format("reservar"));
+							dialogPagar("Pagado");
+							
+						} catch (IOException e1) {
+							// TODO Auto-generated catch block
+							Notification.show("Algo salió mal guardando.");
+							e1.printStackTrace();
+						}
+        	        	
+        	        	
+        	        	
+        	        });
+        	        dialog.open();
+				}
+        	});
+
             clearForm();
         });
     }
@@ -81,15 +154,23 @@ public class PaymentView extends Div {
     }
 
     private Component createTitle() {
-        return new H3("Address");
+        return new H3("Realizar un pago");
     }
 
     private Component createFormLayout() {
         FormLayout formLayout = new FormLayout();
-
-        formLayout.add(reservaSelectPackageField, paymentDate);
         
-        formLayout.setColspan(reservaSelectPackageField, 2);
+        reservasCombo.setLabel("Reservas pendientes");
+        reservasCombo.setWidthFull();
+        reservasCombo.setPlaceholder("Reservas");
+        reservasCombo.setAllowedCharPattern("[\\+\\d]");
+        reservasCombo.setItems(itemsReservas);
+        reservasCombo.addCustomValueSetListener(e -> reservasCombo.setValue(e.getDetail()));
+
+        formLayout.add(reservasCombo, cardNumber, dateNumber, secretNumber, paymentDate);
+        
+        formLayout.setColspan(cardNumber, 2);
+        formLayout.setColspan(reservasCombo, 2);
         formLayout.setColspan(paymentDate, 2);
         return formLayout;
     }
@@ -106,49 +187,6 @@ public class PaymentView extends Div {
     private void clearForm() {
         
     }
-    
-    
-    
-    private static class ReservasCombo extends CustomField<String> {
-        private ComboBox<String> reservasField = new ComboBox<>();
-
-        public ReservasCombo(String label) {
-            setLabel(label);
-            reservasField.setWidthFull();
-            reservasField.setPlaceholder("Reservas");
-            reservasField.setAllowedCharPattern("[\\+\\d]");
-            reservasField.setItems("Reserva #1", "Reserva #2", "Reserva #3");
-            reservasField.addCustomValueSetListener(e -> reservasField.setValue(e.getDetail()));
-            HorizontalLayout layout = new HorizontalLayout(reservasField);
-            add(layout);
-        }
-
-        @Override
-        protected String generateModelValue() {
-            if (reservasField.getValue() != null ) {
-                String s = reservasField.getValue();
-                return s;
-            }
-            return "";
-        }
-
-        @Override
-        protected void setPresentationValue(String phoneNumber) {
-            String[] parts = phoneNumber != null ? phoneNumber.split(" ", 2) : new String[0];
-            if (parts.length == 1) {
-            	reservasField.clear();
-            	
-            } else if (parts.length == 2) {
-            	reservasField.setValue(parts[0]);
-            	
-            } else {
-            	reservasField.clear();
-            	
-            }
-        }
-    }
-    
-    
     
 
 }
