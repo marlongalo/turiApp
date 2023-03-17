@@ -30,6 +30,7 @@ public class PackageModel extends AbstractEntity {
     public String getNamePackage() {
         return namepackage;
     }
+     
     public void setNamePackage(String namePackage) {
         this.namepackage = namePackage;
     }
