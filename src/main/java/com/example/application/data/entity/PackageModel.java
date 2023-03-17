@@ -14,6 +14,7 @@ public class PackageModel extends AbstractEntity {
     private String activities;
     private Integer price;
 
+    
     public Integer getPackageID() {
         return packageid;
     }

@@ -132,8 +132,6 @@ public class PaymentView extends Div {
 							e1.printStackTrace();
 						}
         	        	
-        	        	
-        	        	
         	        });
         	        dialog.open();
 				}
