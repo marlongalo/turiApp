@@ -2,9 +2,7 @@ package com.example.application.data.service;
 
 import java.io.IOException;
 
-import com.example.application.data.entity.ClientModel;
 import com.example.application.data.entity.ClientResponse;
-import com.example.application.data.entity.PackageModel;
 import com.example.application.data.entity.PaqueteResponse;
 import com.example.application.data.entity.PaymentModel;
 import com.example.application.data.entity.ReservaModel;
@@ -19,7 +17,6 @@ public class DatabaseServiceImplement {
 	
 	private static DatabaseServiceImplement INSTANCE = null;
 	private DatabaseClient client;
-	private DatabaseClient models;
 
     private DatabaseServiceImplement(){
     	client = new DatabaseClient();
@@ -37,8 +34,6 @@ public class DatabaseServiceImplement {
     }
     
     
-    
-    //OPERACIONES DE LA VISTA PAQUETES
     public PaqueteResponse listarPaquetes() throws IOException {
     	Call<PaqueteResponse> paquetesCall = client.getDatabaseServicePaquetes().listarPaquetes();
     	
@@ -51,23 +46,6 @@ public class DatabaseServiceImplement {
     }
     
     
-    public boolean crearPaquetes(PackageModel nuevo) throws IOException {
-    	Call<ResponseBody> call = client.getDatabaseServicePaquetes().crearPaquetes(nuevo);
-    	Response<ResponseBody> response = call.execute();
-    	return response.isSuccessful();
-    }
-    
-    
-    public boolean actualizarPaquetes(PackageModel actualizar) throws IOException {
-    	Call<ResponseBody> call = client.getDatabaseServicePaquetes().actualizarPaquetes(actualizar);
-    	Response<ResponseBody> response = call.execute();
-    	return response.isSuccessful();
-    }
-    
-    
-    
-    //OPERACIONES DE LA VISTA CLIENTE
-    
     public ClientResponse listarClientes() throws IOException {
     	Call<ClientResponse> paquetesCall = client.getDatabaseServiceClient().listarClientes();
     	
@@ -79,21 +57,6 @@ public class DatabaseServiceImplement {
     	}
     }
     
-
-    
-    public boolean crearClientes(ClientModel nuevo) throws IOException {
-    	Call<ResponseBody> call = client.getDatabaseServiceClient().crearClientes(nuevo);
-    	Response<ResponseBody> response = call.execute();
-    	return response.isSuccessful();
-    }
-    
-    
-    public boolean actualizarClientes(ClientModel actualizar) throws IOException {
-    	Call<ResponseBody> call = client.getDatabaseServiceClient().actualizarClientes(actualizar);
-    	Response<ResponseBody> response = call.execute();
-    	return response.isSuccessful();
-    }
-
     public boolean crearReserva( ReservaModel nuevaReserva ) throws IOException {
     	Call<ResponseBody> reservaCall = client.getDatabaseServiceReserva().crearReserva(nuevaReserva);
     	Response<ResponseBody> response = reservaCall.execute();
