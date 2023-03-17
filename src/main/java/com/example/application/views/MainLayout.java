@@ -1,6 +1,5 @@
 package com.example.application.views;
 
-
 import com.example.application.components.appnav.AppNav;
 import com.example.application.components.appnav.AppNavItem;
 import com.example.application.views.client.ClientView;

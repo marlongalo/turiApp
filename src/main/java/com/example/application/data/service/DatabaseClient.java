@@ -46,6 +46,12 @@ public class DatabaseClient {
 		return retrofit.create(DatabaseServicePaquetes.class);
 	}
 	
+	public DatabaseServiceReservas getDatabaseServiceReserva() {
+		return retrofit.create(DatabaseServiceReservas.class);
+	}
 	
+	public DatabaseServicePayment getDatabaseServicePayment() {
+		return retrofit.create(DatabaseServicePayment.class);
+	}
 
 }
