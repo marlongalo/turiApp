@@ -78,7 +78,12 @@ public class PackagesView extends Div implements BeforeEnterObserver {
         grid.asSingleSelect().addValueChangeListener(event -> {
         	
             if (event.getValue() != null) {
-                UI.getCurrent().navigate(String.format(PACKAGEMODEL_EDIT_ROUTE_TEMPLATE, event.getValue().getPackageID()));
+              
+              UI.getCurrent().navigate(String.format(PACKAGEMODEL_EDIT_ROUTE_TEMPLATE, event.getValue().getPackageID()));
+            	
+            	namePackage.setValue(event.getValue().getNamePackage());
+            	packageID.setValue(event.getValue().getPackageID().toString());
+            	
             } else {
                 clearForm();
                 UI.getCurrent().navigate(PackagesView.class);

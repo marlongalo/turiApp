@@ -1,23 +1,26 @@
 package com.example.application.views.reservar;
 
+import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.time.ZoneId;
 
 import com.example.application.data.entity.ClientModel;
 import com.example.application.data.entity.ClientResponse;
 import com.example.application.data.entity.PackageModel;
 import com.example.application.data.entity.PaqueteResponse;
-import com.example.application.data.entity.SamplePerson;
+import com.example.application.data.entity.ReservaModel;
 import com.example.application.data.service.DatabaseServiceImplement;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.customfield.CustomField;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -28,9 +31,7 @@ import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
@@ -39,6 +40,7 @@ import com.vaadin.flow.router.RouteAlias;
 @Route(value = "reservar", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 @Uses(Icon.class)
+
 public class ReservarView extends Div {
 
 	private ComboBox<String> packageCombo = new ComboBox<>();
@@ -47,6 +49,9 @@ public class ReservarView extends Div {
 	private ComboBox<String> clientCombo = new ComboBox<>();
 	Collection<ClientModel> collectionClientes;
 	
+	private PackageModel packageSelected;
+	private ClientModel clienteSelected;
+	
 	private DatePicker dateIn = new DatePicker("Fecha de inicio");
 	private DatePicker dateOut = new DatePicker("Fecha de fin");
 	private TextField price = new TextField("Precio");
@@ -54,18 +59,23 @@ public class ReservarView extends Div {
     
     private Hr dividerHr = new Hr();
 
-    private Button cancel = new Button("Cancel");
-    private Button save = new Button("Save");
+    private Button cancel = new Button("Cancelar");
+    private Button save = new Button("Guardar");
+    private Button calculate = new Button("Calcular");
     
     private DatabaseServiceImplement db;
     
     private List<String> itemsPaquetes = new ArrayList<>();
     private List<String> itemsClientes = new ArrayList<>();
     
+    Date rangeInDate;
+    Date rangeOutDate;
+    
 
     public ReservarView() {
         addClassName("reservar-view");
         db = DatabaseServiceImplement.getInstance();
+        ZoneId defaultZoneId = ZoneId.systemDefault();
         
         add(createTitle());
         
@@ -100,15 +110,70 @@ public class ReservarView extends Div {
         add(createFormLayout());
         add(createButtonLayout());
 
-        cancel.addClickListener(e -> clearForm());
+        cancel.addClickListener(e -> gotToPay());
         save.addClickListener(e -> {
-            clearForm();
+        	
+        	ReservaModel nuevaReserva = new ReservaModel();
+        	
+        	nuevaReserva.setPackageid(packageSelected.getPackageID());
+        	nuevaReserva.setClienteid(clienteSelected.getClientID());
+        	nuevaReserva.setFechainicio(rangeInDate.toString());
+        	nuevaReserva.setFechafin(rangeOutDate.toString());
+        	nuevaReserva.setPrice(Integer.parseInt(price.getValue()));
+        	nuevaReserva.setPayed(0);
+        	
+        	try {
+				db.crearReserva(nuevaReserva);
+				Notification.show("Reserva guardada correctamente.");
+				gotToPay();
+			} catch (IOException e1) {
+				Notification.show("Algo salió mal durante el guardado.");
+				e1.printStackTrace();
+			}
+            
         });
         
+        
+        calculate.addClickListener(e -> {
+        	String packageNameString = packageCombo.getValue();
+        	
+        	collectionPaquetes.forEach(paquete -> {
+        		if( packageNameString == paquete.getNamePackage() ) {
+        			packageSelected = paquete;
+        		}
+        	});
+        	
+        	
+        	String clienteString = clientCombo.getValue();
+        	
+        	collectionClientes.forEach(cliente -> {
+        		if( clienteString == cliente.getName() ) {
+        			clienteSelected = cliente;
+        		}
+        	});
+        	
+        	LocalDate rangeIn = dateIn.getValue();
+        	LocalDate rangeOut = dateOut.getValue();
+        	rangeInDate = Date.from(rangeIn.atStartOfDay(defaultZoneId).toInstant());
+        	rangeOutDate = Date.from(rangeOut.atStartOfDay(defaultZoneId).toInstant());
+        	
+        	
+        	long range = rangeOutDate.getTime() - rangeInDate.getTime();
+        	
+        	TimeUnit time = TimeUnit.DAYS;
+        	long difference = time.convert(range, TimeUnit.MILLISECONDS);
+        	
+        	Notification.show(difference + "");
+        	int totalPrice = (int) (difference * packageSelected.getPrice());
+        	
+        	price.setValue(totalPrice + "");
+        	
+        });
     }
 
-    private void clearForm() {
+    private void gotToPay() {
         //binder.setBean(new SamplePerson());
+    	UI.getCurrent().navigate(String.format("payment"));
     }
 
     private Component createTitle() {
@@ -140,7 +205,7 @@ public class ReservarView extends Div {
     	
 
     	//email.setErrorMessage("Please enter a valid email address");
-        formLayout.add(packageCombo, dividerHr, clientCombo, dividerHr, dateIn, dateOut, dividerHr, price); // Include the field you will need.
+        formLayout.add(packageCombo, dividerHr, clientCombo, dividerHr, dateIn, dateOut, dividerHr, calculate, price); // Include the field you will need.
         formLayout.setResponsiveSteps(
                 // Use one column by default
                 new ResponsiveStep("0", 1),
