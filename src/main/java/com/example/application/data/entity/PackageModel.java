@@ -5,27 +5,19 @@ import javax.persistence.Entity;
 @Entity
 public class PackageModel extends AbstractEntity {
 
-    private Integer packageid;
-    private String image;
+    private Long packageid;
     private String namepackage;
     private String destiny;
-    private Integer duration;
     private String hotel;
     private String activities;
-    private Integer price;
-
-    public Integer getPackageID() {
+    
+    public Long getPackageID() {
         return packageid;
     }
-    public void setPackageID(Integer packageID) {
+    public void setPackageID(Long packageID) {
         this.packageid = packageID;
     }
-    public String getImage() {
-        return image;
-    }
-    public void setImage(String image) {
-        this.image = image;
-    }
+   
     public String getNamePackage() {
         return namepackage;
     }
@@ -38,12 +30,8 @@ public class PackageModel extends AbstractEntity {
     public void setDestiny(String destiny) {
         this.destiny = destiny;
     }
-    public Integer getDuration() {
-        return duration;
-    }
-    public void setDuration(Integer duration) {
-        this.duration = duration;
-    }
+   
+    
     public String getHotel() {
         return hotel;
     }
@@ -56,11 +44,6 @@ public class PackageModel extends AbstractEntity {
     public void setActivities(String activities) {
         this.activities = activities;
     }
-    public Integer getPrice() {
-        return price;
-    }
-    public void setPrice(Integer price) {
-        this.price = price;
-    }
+    
 
 }
